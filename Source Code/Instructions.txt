@@ -1,0 +1,7 @@
+First run command npm install
+Then copy @pnp,jquery,jqueryUI,bootstarp,react-file-viewer,react-file-downloder,react-awesome-modal folder and paste in node module.
+DataFields
+Name        single line text
+Type 	      choice (DropDown and enter your values)
+Email         single line text
+Gender      choice (Radio button with value Male and Female)
