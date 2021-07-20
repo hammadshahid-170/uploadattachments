@@ -22,7 +22,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 let attachments: AttachmentFileInfo[] = [];
 var FullPath = window.location.href;
 var arrayOfParts = FullPath.split('/');
-const Sharepoint19SiteUrl = arrayOfParts.slice(0, 4).join("/");
+const Sharepoint19SiteUrl = arrayOfParts.slice(0, 5).join("/");
 const SPINNER = {
   zIndex: 9001,
   marginTop: '300px',
@@ -249,7 +249,8 @@ export default class FormUploadDocumentsCreate extends React.Component<{}, IForm
   //#endregion
   // function for save item
   private _SaveDocuments() {
-    const { uploadDocuments } = this.state;
+    try {
+      const { uploadDocuments } = this.state;
     uploadDocuments.FileAttachments = attachments;
     attachments = [];
     this.setState({ isSpinnerVisible: true });
@@ -258,5 +259,9 @@ export default class FormUploadDocumentsCreate extends React.Component<{}, IForm
       this.state._reload();
     });
     this.state._goBack();
+    } catch (error) {
+      console.log("error while creating item",error);
+    }
+    
   }
 }

@@ -74,7 +74,7 @@ export class DetailsListUploadDocuments extends React.Component<{}, IDetailsList
     // this._allItems = 
     const columns: IColumn[] = [
       {
-        key: 'column1', name: 'Delete', fieldName: 'Delete',  minWidth: 50, maxWidth: 50, isResizable: true,
+        key: 'column1', name: 'Delete', fieldName: 'Delete', minWidth: 50, maxWidth: 50, isResizable: true,
         onRender: (item) => (
           <button onClick={() => {
             { if (window.confirm('Are you sure you want to delete?')) this.deleteItem(item, this); }
@@ -84,9 +84,9 @@ export class DetailsListUploadDocuments extends React.Component<{}, IDetailsList
       {
         key: 'column2', name: 'Edit', fieldName: 'Edit', minWidth: 50, maxWidth: 50, isResizable: true,
         onRender: (item) => (
-          <button  onClick={() => {
-               this._onItemEdit(item, this)
-             }} id={item.ID} type="button" className="btn btn-primary" style={{ cursor: 'pointer', fontSize: '9px' }}>Edit</button>
+          <button onClick={() => {
+            this._onItemEdit(item, this)
+          }} id={item.ID} type="button" className="btn btn-primary" style={{ cursor: 'pointer', fontSize: '9px' }}>Edit</button>
         )
       },
       {
@@ -107,8 +107,8 @@ export class DetailsListUploadDocuments extends React.Component<{}, IDetailsList
         maxWidth: 200,
         isRowHeader: true,
         isResizable: true,
-       // isSorted: true,
-       // isSortedDescending: false,
+        //isSorted: true,
+        isSortedDescending: false,
         // sortAscendingAriaLabel: 'Sorted A to Z',
         // sortDescendingAriaLabel: 'Sorted Z to A',
         onColumnClick: this._onColumnClick,
@@ -123,8 +123,8 @@ export class DetailsListUploadDocuments extends React.Component<{}, IDetailsList
         maxWidth: 200,
         isRowHeader: true,
         isResizable: true,
-       // isSorted: true,
-        //isSortedDescending: false,
+        // isSorted: true,
+        isSortedDescending: false,
         // sortAscendingAriaLabel: 'Sorted A to Z',
         // sortDescendingAriaLabel: 'Sorted Z to A',
         onColumnClick: this._onColumnClick,
@@ -139,8 +139,8 @@ export class DetailsListUploadDocuments extends React.Component<{}, IDetailsList
         maxWidth: 200,
         isRowHeader: true,
         isResizable: true,
-       // isSorted: true,
-        //isSortedDescending: false,
+        //isSorted: true,
+        isSortedDescending: false,
         // sortAscendingAriaLabel: 'Sorted A to Z',
         // sortDescendingAriaLabel: 'Sorted Z to A',
         onColumnClick: this._onColumnClick,
@@ -155,23 +155,20 @@ export class DetailsListUploadDocuments extends React.Component<{}, IDetailsList
         maxWidth: 200,
         isRowHeader: true,
         isResizable: true,
-       
         onColumnClick: this._onColumnClick,
         data: 'string',
         isPadded: true
       }
     ];
-
     this._selection = new Selection({
       onSelectionChanged: () => {
         this.setState({
-         // selectionDetails: this._getSelectionDetails(),
+          // selectionDetails: this._getSelectionDetails(),
           showEditUploadDocumentsPanel: this.showEditPanel,
-
         });
       }
     });
-this._allItems=[]
+    this._allItems = []
     this.state = {
       items: this._allItems,
       columns: columns,
@@ -179,37 +176,33 @@ this._allItems=[]
       showEditUploadDocumentsPanel: false,
       selectedUploadDocuments: null,
       _goBack: this._hidePanel,
-      showModal:false
+      showModal: false
     };
   }
   componentDidMount() {
     this._LoadDocuments();
   }
-
   public render() {
     const { columns, items, selectionDetails, showEditUploadDocumentsPanel } = this.state;
-
     return (
       <Fabric>
-        
         <CommandBarUploadDocuments  {...this} />
-       
         <MarqueeSelection selection={this._selection}>
           <DetailsList
             items={items}
             columns={columns}
             selectionMode={SelectionMode.single}
             //getKey={this._getKey}
-          //  setKey="set"
+            //  setKey="set"
             layoutMode={DetailsListLayoutMode.justified}
             isHeaderVisible={true}
           //  selection={this._selection}
-        //    selectionPreservedOnEmptyClick={true}
-           // onItemInvoked={(item) => { this._onItemInvoked(item, this); }}
-           // enterModalSelectionOnTouch={true}
+          //    selectionPreservedOnEmptyClick={true}
+          // onItemInvoked={(item) => { this._onItemInvoked(item, this); }}
+          // enterModalSelectionOnTouch={true}
           //  ariaLabelForSelectionColumn="Toggle selection"
-           // ariaLabelForSelectAllCheckbox="Toggle selection for all items"
-            //checkButtonAriaLabel="Row checkbox"
+          // ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+          //checkButtonAriaLabel="Row checkbox"
           />
 
         </MarqueeSelection>
@@ -222,108 +215,73 @@ this._allItems=[]
     );
   }
   private _LoadDocuments() {
-    const items: IUploadDocuments[] = [];
-    this._uploadDocumentsDataProvider.getItems().then((docs: IUploadDocuments[]) => {
-      docs.forEach(element => {
-         items.push({
-          ID: element.ID,
-          Name: element.Name,
-          Email: element.Email,
-          Type: element.Type,
-          gender: element.gender,
-          Attachments: element.Attachments,
-          FileNames: element.FileNames,
-          ServerRelativeUrls: element.ServerRelativeUrls,
-          
+    try {
+      const items: IUploadDocuments[] = [];
+      this._uploadDocumentsDataProvider.getItems().then((docs: IUploadDocuments[]) => {
+        docs.forEach(element => {
+          items.push({
+            ID: element.ID,
+            Name: element.Name,
+            Email: element.Email,
+            Type: element.Type,
+            gender: element.gender,
+            Attachments: element.Attachments,
+            FileNames: element.FileNames,
+            ServerRelativeUrls: element.ServerRelativeUrls,
           });
+        });
+        this.setState({ items: docs })
+        return docs;
       });
-      this.setState({ items: docs })
-      return docs;
-
-    });
-    return items;
-  }
-  private _showModal(item: IUploadDocuments) {
-    let fileUrl: string;
-    $("#previewAttachmentsRow").empty();
-    for (let i = 0; i < item.ServerRelativeUrls.length; i++) {
-      fileUrl = SITEURL + item.ServerRelativeUrls[i];
-      const fileExtension = item.FileNames[i].split(".")[1].toLowerCase();
-      if (fileExtension === "jpg" || fileExtension === "jpeg" || fileExtension === "png" || fileExtension === "gif" || fileExtension === "tiff") {
-        $("#previewAttachmentsRow").append(
-          "<div class='col-xl-6 col-lg-6 col-md-6 col-sm-12 mt-2'>" +
-          "<img class='img-fluid img-thumbnail' src='" + fileUrl + "' />" +
-          "<br>" +
-          "<a class='d-inline-block text-truncate' style='max-width: 280px;' href='" + fileUrl + "' target='_blank' id='" + item.FileNames[i] + "'>" + item.FileNames[i] + "</a>" +
-          "</div>"
-        );
-      }
-      else {
-        // if (fileExtension === "doc" || fileExtension === "docx" || fileExtension === "pdf")
-        // const iconName = fileExtension === "doc" ? "Document" : fileExtension === "docx" ? "WordDocument" : fileExtension === "pdf" ? "PDF" : "";
-        // "<iframe class='doc' src='" + fileUrl + "'></iframe>" +
-        // <i style='font-size: x-large;' class='ms-Icon ms-Icon--" + iconName + "' aria-hidden='true'></i> 
-        $("#previewAttachmentsRow").append(
-          "<div class='col-xl-6 col-lg-6 col-md-6 col-sm-12 mt-2'>" +
-          "<a href='" + fileUrl + "' target='_blank'>" + item.FileNames[i] + "</a>" +
-          "</div>"
-        );
-      }
+      return items;
+    } catch (error) {
+      console.log("error while loading data", error)
     }
-    this.setState({ showModal: true });
   }
-  //To Update the items in the list
-  public componentDidUpdate(previousProps: any, previousState: IDetailsListUploadDocumentsState) {
-
-  }
-
-  private _getKey(item: any, index?: number): string {
-    return item.key;
-  }
-  
-
-  private _onItemInvoked(item: any, value: any): void {
-    let itemDocs = item as IUploadDocuments;
-    value.setState({ selectedUploadDocuments: itemDocs });
-    value.setState({ showEditUploadDocumentsPanel: true });
-
-  }
-
-
   private _hidePanel = () => {
-
-    const items: IUploadDocuments[] = [];
-    this._uploadDocumentsDataProvider.getItems().then((docs: IUploadDocuments[]) => {
-      docs.forEach(element => {
-         items.push({
-          ID: element.ID,
-          Name: element.Name,
-          Email: element.Email,
-          Type: element.Type,
-          gender: element.gender,
-          Attachments: element.Attachments,
-          FileNames: element.FileNames,
-          ServerRelativeUrls: element.ServerRelativeUrls,
-         });
+    try {
+      const items: IUploadDocuments[] = [];
+      this._uploadDocumentsDataProvider.getItems().then((docs: IUploadDocuments[]) => {
+        docs.forEach(element => {
+          items.push({
+            ID: element.ID,
+            Name: element.Name,
+            Email: element.Email,
+            Type: element.Type,
+            gender: element.gender,
+            Attachments: element.Attachments,
+            FileNames: element.FileNames,
+            ServerRelativeUrls: element.ServerRelativeUrls,
+          });
+        });
+        this.setState({ showEditUploadDocumentsPanel: false, items: items })
       });
-      this.setState({ showEditUploadDocumentsPanel: false, items: items })
-    });
+    } catch (error) {
+      console.log("error while hiding panel", error)
+    }
   }
   private _onItemEdit(item: any, value: any): void {
-    console.log("on edit clicked", item)
-    let itemuploaddoc = item as IUploadDocuments;
-    this._uploadDocumentsDataProvider.getItemsById(itemuploaddoc.ID).then((uploaddoc: any) => {
-      let itemuploaddocs = uploaddoc[0] as IUploadDocuments;
-      value.setState({ selectedUploadDocuments: itemuploaddocs });
-      value.setState({ showEditUploadDocumentsPanel: true });
-    });
+    try {
+      console.log("on edit clicked", item)
+      let itemuploaddoc = item as IUploadDocuments;
+      this._uploadDocumentsDataProvider.getItemsById(itemuploaddoc.ID).then((uploaddoc: any) => {
+        let itemuploaddocs = uploaddoc[0] as IUploadDocuments;
+        value.setState({ selectedUploadDocuments: itemuploaddocs });
+        value.setState({ showEditUploadDocumentsPanel: true });
+      });
+    } catch (error) {
+      console.log("error while click edit button", error);
+    }
   }
   private deleteItem(item: any, value: any): void {
-
-    let itemuploaddoc = item as IUploadDocuments;
-    this._uploadDocumentsDataProvider.deleteItem(itemuploaddoc);
-    const items = this.state.items.filter(i => i.ID !== item.ID);
-    this.setState({ items });
+    try {
+      let itemuploaddoc = item as IUploadDocuments;
+      this._uploadDocumentsDataProvider.deleteItem(itemuploaddoc);
+      const items = this.state.items.filter(i => i.ID !== item.ID);
+      this.setState({ items });
+    } catch (error) {
+      console.log("error while click delete button", error);
+    }
   }
   private _getSelectionDetails(): string {
     const selectionCount = this._selection.getSelectedCount();

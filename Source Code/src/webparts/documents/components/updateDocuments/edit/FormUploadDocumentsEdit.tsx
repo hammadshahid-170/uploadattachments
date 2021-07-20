@@ -27,7 +27,7 @@ import FileViewer from 'react-file-viewer';
 let attachments: AttachmentFileInfo[] = [];
 var FullPath = window.location.href;
 var arrayOfParts = FullPath.split('/');
-const Sharepoint19SiteUrl = arrayOfParts.slice(0, 4).join("/");
+const Sharepoint19SiteUrl = arrayOfParts.slice(0, 5).join("/");
 const RestURL = window.location.origin
 const SPINNER = {
   zIndex: 9001,
@@ -112,7 +112,7 @@ export default class FormUploadDocumentsEdit extends React.Component<{}, IFormUp
     return (
       <div>
          {this.state.isSpinnerVisible &&
-          <div className="bg-white position-absolute" style={DIVSPINNER}>
+          <div className="bg-white position-absolute sploader" style={DIVSPINNER}>
             <div style={SPINNER}><Spinner className="mt-2" size={SpinnerSize.large} /></div>
           </div>
         }
@@ -284,11 +284,6 @@ export default class FormUploadDocumentsEdit extends React.Component<{}, IFormUp
           );
         }
         else if (fileExtension !== "zip" && fileExtension !== "rar" && fileExtension !== "exe") {
-          // const iconName = fileExtension === "doc" ? "Document" : fileExtension === "docx" ? "WordDocument" : fileExtension === "pdf" ? "PDF" : "";
-          // <i class='ms-Icon ms-Icon--" + iconName + "' aria-hidden='true'></i> 
-          // "<div class='progress rounded-0 mt-1' style='height: 13px; display: none;'>" +
-          // "<div class='progress-bar' style='height:13px'></div>" +
-          // "</div>" +
           jquery("#fileAttachmentsRow").append(
             "<div class='ms-Grid-col ms-sm12 ms-md6 ms-lg6 mt-2'>" +
             "<div title='" + uploadDocuments.FileNames[i] + "' class='border border-success' style='height: 52px;'>" +
@@ -355,7 +350,6 @@ export default class FormUploadDocumentsEdit extends React.Component<{}, IFormUp
             jquery("#browseFile").val(null);
             window.alert("wrong format");
           }
-
       }
       else {
         // event.currentTarget.value = "";
@@ -370,14 +364,20 @@ export default class FormUploadDocumentsEdit extends React.Component<{}, IFormUp
   //#endregion
   // function for save item
   private _UpdateDocuments() {
-    const { uploadDocuments } = this.state;
+    try {
+      const { uploadDocuments } = this.state;
     uploadDocuments.FileAttachments = this.state.fileAttachments.filter(file => {
       return file.content !== "This is my content";
     });
-    this.setState({ isSpinnerVisible: true });
+    //this.setState({ isSpinnerVisible: true });
     this._uploadDocumentsDataProvider.updateItem(uploadDocuments, this.delFileAtchNames).then((docs: IUploadDocuments[]) => {
-     // this.state._goBack();
+     // this.setState({ isSpinnerVisible: false });
+      this.state._goBack();
     });
+    } catch (error) {
+      console.log("error while updating item",error);
+    }
+    
   }
 }
 

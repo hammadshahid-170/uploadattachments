@@ -5,8 +5,8 @@ import { sp, ItemAddResult } from "@pnp/sp";
 import * as $ from 'jquery';
 var FullPath = window.location.href;
 var arrayOfParts = FullPath.split('/');
-const Sharepoint19SiteUrl = arrayOfParts.slice(0, 4).join("/");
-const BASEURL =Sharepoint19SiteUrl// "https://instantdk.sharepoint.com/sites/Test"//Sharepoint19SiteUrl;
+const Sharepoint19SiteUrl = arrayOfParts.slice(0, 5).join("/");
+const BASEURL = Sharepoint19SiteUrl;
 const LIST_NAME = "Test";
 
 export class UploadDocumentsDataProvider implements IUploadDocumentsDataProvider {
@@ -33,36 +33,38 @@ export class UploadDocumentsDataProvider implements IUploadDocumentsDataProvider
     return this._webPartContext;
   }
   public getItems(): Promise<IUploadDocuments[]> {
-    let uploadDocs: IUploadDocuments[] = [];
-    // get all the items from the list in SharePoint
-    return sp.web.lists.getByTitle(LIST_NAME).items.select("*","AttachmentFiles").expand("AttachmentFiles").get().then((result_docs: any[]) => {
-      result_docs.forEach(element => {
-        if (typeof element != 'undefined' && element) {
-          let FilesUrls = [];
-          let FileNames = [];
-          if (element.AttachmentFiles.results.length != 0) {
-            for (var i = 0; i < element.AttachmentFiles.results.length; i++) {
-              FilesUrls.push(element.AttachmentFiles.results[i].ServerRelativeUrl);
-              FileNames.push(element.AttachmentFiles.results[i].FileName);
+    try {
+      let uploadDocs: IUploadDocuments[] = [];
+      // get all the items from the list in SharePoint
+      return sp.web.lists.getByTitle(LIST_NAME).items.select("*", "AttachmentFiles").expand("AttachmentFiles").get().then((result_docs: any[]) => {
+        result_docs.forEach(element => {
+          if (typeof element != 'undefined' && element) {
+            let FilesUrls = [];
+            let FileNames = [];
+            if (element.AttachmentFiles.results.length != 0) {
+              for (var i = 0; i < element.AttachmentFiles.results.length; i++) {
+                FilesUrls.push(element.AttachmentFiles.results[i].ServerRelativeUrl);
+                FileNames.push(element.AttachmentFiles.results[i].FileName);
+              }
             }
+            uploadDocs.push({
+              ID: element.ID,
+              Name: element.Name,
+              Email: element.Email,
+              Type: element.DType,
+              gender: element.gender,
+              Comment: element.Comment,
+              Attachments: element.Attachments,
+              FileNames: FileNames,
+              ServerRelativeUrls: FilesUrls,
+            });
           }
-          uploadDocs.push({
-            ID: element.ID,
-            Name: element.Name,
-            Email: element.Email,
-            Type: element.DType,
-            gender: element.gender,
-            Attachments: element.Attachments,
-            FileNames: FileNames,
-            ServerRelativeUrls: FilesUrls,
-          });
-
-        }
-
+        });
+        return uploadDocs;
       });
-      return uploadDocs;
-    });
-
+    } catch (error) {
+      console.log("Error while getting data from list", error);
+    }
   }
   // get  // get all the items from the list in SharePoint
   public getItemsById(Itemid): Promise<IUploadDocuments[]> {
@@ -82,7 +84,7 @@ export class UploadDocumentsDataProvider implements IUploadDocumentsDataProvider
             ID: element.ID,
             Name: element.Name,
             Email: element.Email,
-            Comment:element.Comment,
+            Comment: element.Comment,
             Type: element.DType,
             gender: element.gender,
             Attachments: element.Attachments,
@@ -99,102 +101,114 @@ export class UploadDocumentsDataProvider implements IUploadDocumentsDataProvider
   }
   //item create in SharePoint list
   public createItem(itemCreated: IUploadDocuments): Promise<IUploadDocuments[]> {
-    let uploadDocs: IUploadDocuments[] = [];
-    return sp.web.lists.getByTitle(LIST_NAME).items.add({
-      Name: itemCreated.Name,
-      Email: itemCreated.Email,
-      DType: itemCreated.Type,
-      gender: itemCreated.gender,
-      Comment:itemCreated.Comment
-    }).then((iar: ItemAddResult) => {
-      if (itemCreated.FileAttachments.length > 0) {
-        setTimeout(function () {
-          iar.item.attachmentFiles.addMultiple(itemCreated.FileAttachments).then(res => {
-            $(".saveLoader").hide();
-            $(".isBtnDisable, .ms-Panel-closeButton").removeClass("disableBtn");
-            $(".deleteAttachment, .downloadAttachment, .previewAttachment, #browseFile").prop("disabled", false);
-            $(".ms-Panel-closeButton").trigger("click");
-          }).catch(errorMsg => {
+    try {
 
-          });
-        }, 2000);
-      } else {
-        $(".saveLoader").hide();
-        $(".isBtnDisable, .ms-Panel-closeButton").removeClass("disableBtn");
-        $(".deleteAttachment, .downloadAttachment, .previewAttachment, #browseFile").prop("disabled", false);
-        $(".ms-Panel-closeButton").trigger("click");
-      }
-      uploadDocs.push(itemCreated);
-      return uploadDocs;
-
-    });
-  }
-  public updateItem(itemUpdated: IUploadDocuments,delFileAtchNames:any): Promise<IUploadDocuments[]> {
-    // update an item to the list
-    let uploadDocs: IUploadDocuments[] = [];
-    let id = itemUpdated.ID;
-    return sp.web.lists.getByTitle(LIST_NAME).items.getById(id).update({
-      Name: itemUpdated.Name,
-      Email: itemUpdated.Email,
-      DType: itemUpdated.Type,
-      gender: itemUpdated.gender,
-      Comment:itemUpdated.Comment
-    }).then((result_customers) => {
-      console.log(result_customers);
-      if (delFileAtchNames.length > 0) {
-        setTimeout(function () {
-          result_customers.item.attachmentFiles.recycleMultiple(...delFileAtchNames) 
-            .then(r => {
-              console.log("recycle: ", r);
-              if (itemUpdated.FileAttachments.length > 0) {
-                result_customers.item.attachmentFiles.addMultiple(itemUpdated.FileAttachments)
-                  .then(res => {
-                    console.log("Add attachment Files: ", res);
-                    $(".isBtnDisable, .ms-Panel-closeButton").removeClass("disableBtn");
-                    $(".deleteAttachment, .downloadAttachment, .previewAttachment, #browseFile").prop("disabled", false);
-                    $(".ms-Panel-closeButton").trigger("click");
-                  })
-                  .catch(errorMsg => {
-                    console.log("File Attachments Error: ", errorMsg);
-                    $(".saveLoader").hide();
-                    $(".isBtnDisable, .ms-Panel-closeButton").removeClass("disableBtn");
-                    $(".deleteAttachment, .downloadAttachment, .previewAttachment, #browseFile").prop("disabled", false);
-                  });
-              } else {
-                $(".isBtnDisable, .ms-Panel-closeButton").removeClass("disableBtn");
-                $(".deleteAttachment, .downloadAttachment, .previewAttachment, #browseFile").prop("disabled", false);
-                $(".ms-Panel-closeButton").trigger("click");
-              }
-            })
-            .catch(error => {
-              console.log("Recycle Error: ", error);
-            });
-        }, 3000);                   //}
-      } else {
-        if (itemUpdated.FileAttachments.length > 0) {
-          result_customers.item.attachmentFiles.addMultiple(itemUpdated.FileAttachments)
-            .then(res => {
-              console.log("Add attachment Files: ", res);
-              $(".isBtnDisable, .ms-Panel-closeButton").removeClass("disableBtn");
-              $(".deleteAttachment, .downloadAttachment, .previewAttachment, #browseFile").prop("disabled", false);
-              $(".ms-Panel-closeButton").trigger("click");
-            })
-            .catch(errorMsg => {
-              console.log("File Attachments Error: ", errorMsg);
+      let uploadDocs: IUploadDocuments[] = [];
+      return sp.web.lists.getByTitle(LIST_NAME).items.add({
+        Name: itemCreated.Name,
+        Email: itemCreated.Email,
+        DType: itemCreated.Type,
+        gender: itemCreated.gender,
+        Comment: itemCreated.Comment
+      }).then((iar: ItemAddResult) => {
+        if (itemCreated.FileAttachments.length > 0) {
+          setTimeout(function () {
+            iar.item.attachmentFiles.addMultiple(itemCreated.FileAttachments).then(res => {
               $(".saveLoader").hide();
               $(".isBtnDisable, .ms-Panel-closeButton").removeClass("disableBtn");
               $(".deleteAttachment, .downloadAttachment, .previewAttachment, #browseFile").prop("disabled", false);
-            });
+              $(".ms-Panel-closeButton").trigger("click");
+            }).catch(errorMsg => {
 
+            });
+          }, 2000);
         } else {
+          $(".saveLoader").hide();
           $(".isBtnDisable, .ms-Panel-closeButton").removeClass("disableBtn");
           $(".deleteAttachment, .downloadAttachment, .previewAttachment, #browseFile").prop("disabled", false);
           $(".ms-Panel-closeButton").trigger("click");
         }
-      }
-      uploadDocs.push(itemUpdated);
-      return uploadDocs;
-    });
+        uploadDocs.push(itemCreated);
+        return uploadDocs;
+      });
+    } catch (error) {
+      console.log("Error while creating data from list", error);
+    }
+  }
+  public updateItem(itemUpdated: IUploadDocuments, delFileAtchNames: any): Promise<IUploadDocuments[]> {
+    // update an item to the list
+    try {
+      let uploadDocs: IUploadDocuments[] = [];
+      let id = itemUpdated.ID;
+      return sp.web.lists.getByTitle(LIST_NAME).items.getById(id).update({
+        Name: itemUpdated.Name,
+        Email: itemUpdated.Email,
+        DType: itemUpdated.Type,
+        gender: itemUpdated.gender,
+        Comment: itemUpdated.Comment
+      }).then((result_customers) => {
+        console.log(result_customers);
+        if (delFileAtchNames.length > 0) {
+          setTimeout(function () {
+            result_customers.item.attachmentFiles.recycleMultiple(...delFileAtchNames)
+              .then(r => {
+                console.log("recycle: ", r);
+                if (itemUpdated.FileAttachments.length > 0) {
+                  result_customers.item.attachmentFiles.addMultiple(itemUpdated.FileAttachments)
+                    .then(res => {
+                      console.log("Add attachment Files: ", res);
+                      $(".sploader").hide();
+                      $(".isBtnDisable, .ms-Panel-closeButton").removeClass("disableBtn");
+                      $(".deleteAttachment, .downloadAttachment, .previewAttachment, #browseFile").prop("disabled", false);
+                      $(".ms-Panel-closeButton").trigger("click");
+                    })
+                    .catch(errorMsg => {
+                      console.log("File Attachments Error: ", errorMsg);
+                      $(".sploader").hide();
+                      $(".isBtnDisable, .ms-Panel-closeButton").removeClass("disableBtn");
+                      $(".deleteAttachment, .downloadAttachment, .previewAttachment, #browseFile").prop("disabled", false);
+                    });
+                } else {
+                  $(".sploader").hide();
+                  $(".isBtnDisable, .ms-Panel-closeButton").removeClass("disableBtn");
+                  $(".deleteAttachment, .downloadAttachment, .previewAttachment, #browseFile").prop("disabled", false);
+                  $(".ms-Panel-closeButton").trigger("click");
+                }
+              })
+              .catch(error => {
+                console.log("Recycle Error: ", error);
+              });
+          }, 3000); 
+        } else {
+          if (itemUpdated.FileAttachments.length > 0) {
+            result_customers.item.attachmentFiles.addMultiple(itemUpdated.FileAttachments)
+              .then(res => {
+                console.log("Add attachment Files: ", res);
+                $(".sploader").hide();
+                $(".isBtnDisable, .ms-Panel-closeButton").removeClass("disableBtn");
+                $(".deleteAttachment, .downloadAttachment, .previewAttachment, #browseFile").prop("disabled", false);
+                $(".ms-Panel-closeButton").trigger("click");
+              })
+              .catch(errorMsg => {
+                console.log("File Attachments Error: ", errorMsg);
+                $(".saveLoader").hide();
+                $(".isBtnDisable, .ms-Panel-closeButton").removeClass("disableBtn");
+                $(".deleteAttachment, .downloadAttachment, .previewAttachment, #browseFile").prop("disabled", false);
+              });
+
+          } else {
+            $(".sploader").hide();
+            $(".isBtnDisable, .ms-Panel-closeButton").removeClass("disableBtn");
+            $(".deleteAttachment, .downloadAttachment, .previewAttachment, #browseFile").prop("disabled", false);
+            $(".ms-Panel-closeButton").trigger("click");
+          }
+        }
+        uploadDocs.push(itemUpdated);
+        return uploadDocs;
+      });
+    } catch (error) {
+      console.log("Error while updating data from list", error);
+    }
   }
   //item delete in SharePoint list
   public deleteItem(itemDeleted: IUploadDocuments): Promise<IUploadDocuments[]> {
